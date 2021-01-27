@@ -47,11 +47,11 @@
 #[cfg(all(feature="alloc", not(feature="std")))] extern crate alloc;
 #[cfg(all(feature="alloc", not(feature="std")))] use alloc::boxed::Box;
 
-pub use error::Error;
+// pub use error::Error;
 // #[cfg(feature="getrandom")] pub use os::OsRng;
 
 
-mod error;
+// mod error;
 // pub mod block;
 // pub mod impls;
 // pub mod le;
@@ -180,7 +180,7 @@ pub trait RngCore {
     /// `self.try_fill_bytes(dest).unwrap()` or more specific error handling.
     ///
     /// [`fill_bytes`]: RngCore::fill_bytes
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error>;
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()>;
 }
 
 /// A marker trait used to indicate that an [`RngCore`] or [`BlockRngCore`]
@@ -402,10 +402,14 @@ impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
     }
 
     #[inline(always)]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-        (**self).try_fill_bytes(dest)
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()> {
+        (**self).try_fill_bytes(dest).unwrap();
+        Ok(())
     }
 }
+
+// Implement `CryptoRng` for references to an `CryptoRng`.
+impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
 
 // Implement `RngCore` for boxed references to an `RngCore`.
 // Force inlining all functions, so that it is up to the `RngCore`
@@ -440,9 +444,6 @@ impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
 //         Ok(buf.len())
 //     }
 // }
-
-// Implement `CryptoRng` for references to an `CryptoRng`.
-impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
 
 // Implement `CryptoRng` for boxed references to an `CryptoRng`.
 // #[cfg(feature="alloc")]
