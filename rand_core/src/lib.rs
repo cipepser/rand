@@ -27,35 +27,35 @@
 //!
 //! [`rand`]: https://docs.rs/rand
 
-#![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk.png",
-       html_favicon_url = "https://www.rust-lang.org/favicon.ico",
-       html_root_url = "https://rust-random.github.io/rand/")]
-
-#![deny(missing_docs)]
-#![deny(missing_debug_implementations)]
-#![doc(test(attr(allow(unused_variables), deny(warnings))))]
-
-#![allow(clippy::unreadable_literal)]
-
-#![cfg_attr(not(feature="std"), no_std)]
-
-
-use core::default::Default;
-use core::convert::AsMut;
-use core::ptr::copy_nonoverlapping;
+// #![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk.png",
+//        html_favicon_url = "https://www.rust-lang.org/favicon.ico",
+//        html_root_url = "https://rust-random.github.io/rand/")]
+//
+// #![deny(missing_docs)]
+// #![deny(missing_debug_implementations)]
+// #![doc(test(attr(allow(unused_variables), deny(warnings))))]
+//
+// #![allow(clippy::unreadable_literal)]
+//
+// #![cfg_attr(not(feature="std"), no_std)]
+//
+//
+// use core::default::Default;
+// use core::convert::AsMut;
+// use core::ptr::copy_nonoverlapping;
 
 #[cfg(all(feature="alloc", not(feature="std")))] extern crate alloc;
 #[cfg(all(feature="alloc", not(feature="std")))] use alloc::boxed::Box;
 
 pub use error::Error;
-#[cfg(feature="getrandom")] pub use os::OsRng;
+// #[cfg(feature="getrandom")] pub use os::OsRng;
 
 
 mod error;
-pub mod block;
-pub mod impls;
-pub mod le;
-#[cfg(feature="getrandom")] mod os;
+// pub mod block;
+// pub mod impls;
+// pub mod le;
+// #[cfg(feature="getrandom")] mod os;
 
 
 /// The core of a random number generator.
@@ -99,35 +99,35 @@ pub mod le;
 ///   External / hardware RNGs can choose to implement `Default`.
 /// - `Eq` and `PartialEq` could be implemented, but are probably not useful.
 ///
-/// # Example
-///
-/// A simple example, obviously not generating very *random* output:
-///
-/// ```
-/// #![allow(dead_code)]
-/// use rand_core::{RngCore, Error, impls};
-///
-/// struct CountingRng(u64);
-///
-/// impl RngCore for CountingRng {
-///     fn next_u32(&mut self) -> u32 {
-///         self.next_u64() as u32
-///     }
-///
-///     fn next_u64(&mut self) -> u64 {
-///         self.0 += 1;
-///         self.0
-///     }
-///
-///     fn fill_bytes(&mut self, dest: &mut [u8]) {
-///         impls::fill_bytes_via_next(self, dest)
-///     }
-///
-///     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-///         Ok(self.fill_bytes(dest))
-///     }
-/// }
-/// ```
+// # Example
+//
+// A simple example, obviously not generating very *random* output:
+//
+// ```
+// #![allow(dead_code)]
+// use rand_core::{RngCore, Error, impls};
+//
+// struct CountingRng(u64);
+//
+// impl RngCore for CountingRng {
+//     fn next_u32(&mut self) -> u32 {
+//         self.next_u64() as u32
+//     }
+//
+//     fn next_u64(&mut self) -> u64 {
+//         self.0 += 1;
+//         self.0
+//     }
+//
+//     fn fill_bytes(&mut self, dest: &mut [u8]) {
+//         impls::fill_bytes_via_next(self, dest)
+//     }
+//
+//     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+//         Ok(self.fill_bytes(dest))
+//     }
+// }
+// ```
 ///
 /// [`rand`]: https://docs.rs/rand
 /// [`try_fill_bytes`]: RngCore::try_fill_bytes
@@ -207,286 +207,286 @@ pub trait RngCore {
 /// [`BlockRngCore`]: block::BlockRngCore
 pub trait CryptoRng {}
 
-/// A random number generator that can be explicitly seeded.
-///
-/// This trait encapsulates the low-level functionality common to all
-/// pseudo-random number generators (PRNGs, or algorithmic generators).
-///
-/// [`rand`]: https://docs.rs/rand
-pub trait SeedableRng: Sized {
-    /// Seed type, which is restricted to types mutably-dereferencable as `u8`
-    /// arrays (we recommend `[u8; N]` for some `N`).
-    ///
-    /// It is recommended to seed PRNGs with a seed of at least circa 100 bits,
-    /// which means an array of `[u8; 12]` or greater to avoid picking RNGs with
-    /// partially overlapping periods.
-    ///
-    /// For cryptographic RNG's a seed of 256 bits is recommended, `[u8; 32]`.
-    ///
-    ///
-    /// # Implementing `SeedableRng` for RNGs with large seeds
-    ///
-    /// Note that the required traits `core::default::Default` and
-    /// `core::convert::AsMut<u8>` are not implemented for large arrays
-    /// `[u8; N]` with `N` > 32. To be able to implement the traits required by
-    /// `SeedableRng` for RNGs with such large seeds, the newtype pattern can be
-    /// used:
-    ///
-    /// ```
-    /// use rand_core::SeedableRng;
-    ///
-    /// const N: usize = 64;
-    /// pub struct MyRngSeed(pub [u8; N]);
-    /// pub struct MyRng(MyRngSeed);
-    ///
-    /// impl Default for MyRngSeed {
-    ///     fn default() -> MyRngSeed {
-    ///         MyRngSeed([0; N])
-    ///     }
-    /// }
-    ///
-    /// impl AsMut<[u8]> for MyRngSeed {
-    ///     fn as_mut(&mut self) -> &mut [u8] {
-    ///         &mut self.0
-    ///     }
-    /// }
-    ///
-    /// impl SeedableRng for MyRng {
-    ///     type Seed = MyRngSeed;
-    ///
-    ///     fn from_seed(seed: MyRngSeed) -> MyRng {
-    ///         MyRng(seed)
-    ///     }
-    /// }
-    /// ```
-    type Seed: Sized + Default + AsMut<[u8]>;
-
-    /// Create a new PRNG using the given seed.
-    ///
-    /// PRNG implementations are allowed to assume that bits in the seed are
-    /// well distributed. That means usually that the number of one and zero
-    /// bits are roughly equal, and values like 0, 1 and (size - 1) are unlikely.
-    /// Note that many non-cryptographic PRNGs will show poor quality output
-    /// if this is not adhered to. If you wish to seed from simple numbers, use
-    /// `seed_from_u64` instead.
-    ///
-    /// All PRNG implementations should be reproducible unless otherwise noted:
-    /// given a fixed `seed`, the same sequence of output should be produced
-    /// on all runs, library versions and architectures (e.g. check endianness).
-    /// Any "value-breaking" changes to the generator should require bumping at
-    /// least the minor version and documentation of the change.
-    ///
-    /// It is not required that this function yield the same state as a
-    /// reference implementation of the PRNG given equivalent seed; if necessary
-    /// another constructor replicating behaviour from a reference
-    /// implementation can be added.
-    ///
-    /// PRNG implementations should make sure `from_seed` never panics. In the
-    /// case that some special values (like an all zero seed) are not viable
-    /// seeds it is preferable to map these to alternative constant value(s),
-    /// for example `0xBAD5EEDu32` or `0x0DDB1A5E5BAD5EEDu64` ("odd biases? bad
-    /// seed"). This is assuming only a small number of values must be rejected.
-    fn from_seed(seed: Self::Seed) -> Self;
-
-    /// Create a new PRNG using a `u64` seed.
-    ///
-    /// This is a convenience-wrapper around `from_seed` to allow construction
-    /// of any `SeedableRng` from a simple `u64` value. It is designed such that
-    /// low Hamming Weight numbers like 0 and 1 can be used and should still
-    /// result in good, independent seeds to the PRNG which is returned.
-    ///
-    /// This **is not suitable for cryptography**, as should be clear given that
-    /// the input size is only 64 bits.
-    ///
-    /// Implementations for PRNGs *may* provide their own implementations of
-    /// this function, but the default implementation should be good enough for
-    /// all purposes. *Changing* the implementation of this function should be
-    /// considered a value-breaking change.
-    fn seed_from_u64(mut state: u64) -> Self {
-        // We use PCG32 to generate a u32 sequence, and copy to the seed
-        const MUL: u64 = 6364136223846793005;
-        const INC: u64 = 11634580027462260723;
-
-        let mut seed = Self::Seed::default();
-        for chunk in seed.as_mut().chunks_mut(4) {
-            // We advance the state first (to get away from the input value,
-            // in case it has low Hamming Weight).
-            state = state.wrapping_mul(MUL).wrapping_add(INC);
-
-            // Use PCG output function with to_le to generate x:
-            let xorshifted = (((state >> 18) ^ state) >> 27) as u32;
-            let rot = (state >> 59) as u32;
-            let x = xorshifted.rotate_right(rot).to_le();
-
-            unsafe {
-                let p = &x as *const u32 as *const u8;
-                copy_nonoverlapping(p, chunk.as_mut_ptr(), chunk.len());
-            }
-        }
-
-        Self::from_seed(seed)
-    }
-
-    /// Create a new PRNG seeded from another `Rng`.
-    ///
-    /// This may be useful when needing to rapidly seed many PRNGs from a master
-    /// PRNG, and to allow forking of PRNGs. It may be considered deterministic.
-    ///
-    /// The master PRNG should be at least as high quality as the child PRNGs.
-    /// When seeding non-cryptographic child PRNGs, we recommend using a
-    /// different algorithm for the master PRNG (ideally a CSPRNG) to avoid
-    /// correlations between the child PRNGs. If this is not possible (e.g.
-    /// forking using small non-crypto PRNGs) ensure that your PRNG has a good
-    /// mixing function on the output or consider use of a hash function with
-    /// `from_seed`.
-    ///
-    /// Note that seeding `XorShiftRng` from another `XorShiftRng` provides an
-    /// extreme example of what can go wrong: the new PRNG will be a clone
-    /// of the parent.
-    ///
-    /// PRNG implementations are allowed to assume that a good RNG is provided
-    /// for seeding, and that it is cryptographically secure when appropriate.
-    /// As of `rand` 0.7 / `rand_core` 0.5, implementations overriding this
-    /// method should ensure the implementation satisfies reproducibility
-    /// (in prior versions this was not required).
-    ///
-    /// [`rand`]: https://docs.rs/rand
-    /// [`rand_os`]: https://docs.rs/rand_os
-    fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
-        let mut seed = Self::Seed::default();
-        rng.try_fill_bytes(seed.as_mut())?;
-        Ok(Self::from_seed(seed))
-    }
-
-    /// Creates a new instance of the RNG seeded via [`getrandom`].
-    ///
-    /// This method is the recommended way to construct non-deterministic PRNGs
-    /// since it is convenient and secure.
-    ///
-    /// In case the overhead of using [`getrandom`] to seed *many* PRNGs is an
-    /// issue, one may prefer to seed from a local PRNG, e.g.
-    /// `from_rng(thread_rng()).unwrap()`.
-    ///
-    /// # Panics
-    ///
-    /// If [`getrandom`] is unable to provide secure entropy this method will panic.
-    ///
-    /// [`getrandom`]: https://docs.rs/getrandom
-    #[cfg(feature="getrandom")]
-    fn from_entropy() -> Self {
-        let mut seed = Self::Seed::default();
-        if let Err(err) = getrandom::getrandom(seed.as_mut()) {
-            panic!("from_entropy failed: {}", err);
-        }
-        Self::from_seed(seed)
-    }
-}
-
-// Implement `RngCore` for references to an `RngCore`.
-// Force inlining all functions, so that it is up to the `RngCore`
-// implementation and the optimizer to decide on inlining.
-impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
-    #[inline(always)]
-    fn next_u32(&mut self) -> u32 {
-        (**self).next_u32()
-    }
-
-    #[inline(always)]
-    fn next_u64(&mut self) -> u64 {
-        (**self).next_u64()
-    }
-
-    #[inline(always)]
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        (**self).fill_bytes(dest)
-    }
-
-    #[inline(always)]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-        (**self).try_fill_bytes(dest)
-    }
-}
-
-// Implement `RngCore` for boxed references to an `RngCore`.
-// Force inlining all functions, so that it is up to the `RngCore`
-// implementation and the optimizer to decide on inlining.
-#[cfg(feature="alloc")]
-impl<R: RngCore + ?Sized> RngCore for Box<R> {
-    #[inline(always)]
-    fn next_u32(&mut self) -> u32 {
-        (**self).next_u32()
-    }
-
-    #[inline(always)]
-    fn next_u64(&mut self) -> u64 {
-        (**self).next_u64()
-    }
-
-    #[inline(always)]
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        (**self).fill_bytes(dest)
-    }
-
-    #[inline(always)]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-        (**self).try_fill_bytes(dest)
-    }
-}
-
-#[cfg(feature="std")]
-impl std::io::Read for dyn RngCore {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
-        self.try_fill_bytes(buf)?;
-        Ok(buf.len())
-    }
-}
-
-// Implement `CryptoRng` for references to an `CryptoRng`.
-impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
-
-// Implement `CryptoRng` for boxed references to an `CryptoRng`.
-#[cfg(feature="alloc")]
-impl<R: CryptoRng + ?Sized> CryptoRng for Box<R> {}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_seed_from_u64() {
-        struct SeedableNum(u64);
-        impl SeedableRng for SeedableNum {
-            type Seed = [u8; 8];
-            fn from_seed(seed: Self::Seed) -> Self {
-                let mut x = [0u64; 1];
-                le::read_u64_into(&seed, &mut x);
-                SeedableNum(x[0])
-            }
-        }
-
-        const N: usize = 8;
-        const SEEDS: [u64; N] = [0u64, 1, 2, 3, 4, 8, 16, -1i64 as u64];
-        let mut results = [0u64; N];
-        for (i, seed) in SEEDS.iter().enumerate() {
-            let SeedableNum(x) = SeedableNum::seed_from_u64(*seed);
-            results[i] = x;
-        }
-
-        for (i1, r1) in results.iter().enumerate() {
-            let weight = r1.count_ones();
-            // This is the binomial distribution B(64, 0.5), so chance of
-            // weight < 20 is binocdf(19, 64, 0.5) = 7.8e-4, and same for
-            // weight > 44.
-            assert!(weight >= 20 && weight <= 44);
-
-            for (i2, r2) in results.iter().enumerate() {
-                if i1 == i2 { continue; }
-                let diff_weight = (r1 ^ r2).count_ones();
-                assert!(diff_weight >= 20);
-            }
-        }
-
-        // value-breakage test:
-        assert_eq!(results[0], 5029875928683246316);
-    }
-}
+// /// A random number generator that can be explicitly seeded.
+// ///
+// /// This trait encapsulates the low-level functionality common to all
+// /// pseudo-random number generators (PRNGs, or algorithmic generators).
+// ///
+// /// [`rand`]: https://docs.rs/rand
+// pub trait SeedableRng: Sized {
+//     /// Seed type, which is restricted to types mutably-dereferencable as `u8`
+//     /// arrays (we recommend `[u8; N]` for some `N`).
+//     ///
+//     /// It is recommended to seed PRNGs with a seed of at least circa 100 bits,
+//     /// which means an array of `[u8; 12]` or greater to avoid picking RNGs with
+//     /// partially overlapping periods.
+//     ///
+//     /// For cryptographic RNG's a seed of 256 bits is recommended, `[u8; 32]`.
+//     ///
+//     ///
+//     /// # Implementing `SeedableRng` for RNGs with large seeds
+//     ///
+//     /// Note that the required traits `core::default::Default` and
+//     /// `core::convert::AsMut<u8>` are not implemented for large arrays
+//     /// `[u8; N]` with `N` > 32. To be able to implement the traits required by
+//     /// `SeedableRng` for RNGs with such large seeds, the newtype pattern can be
+//     /// used:
+//     ///
+//     /// ```
+//     /// use rand_core::SeedableRng;
+//     ///
+//     /// const N: usize = 64;
+//     /// pub struct MyRngSeed(pub [u8; N]);
+//     /// pub struct MyRng(MyRngSeed);
+//     ///
+//     /// impl Default for MyRngSeed {
+//     ///     fn default() -> MyRngSeed {
+//     ///         MyRngSeed([0; N])
+//     ///     }
+//     /// }
+//     ///
+//     /// impl AsMut<[u8]> for MyRngSeed {
+//     ///     fn as_mut(&mut self) -> &mut [u8] {
+//     ///         &mut self.0
+//     ///     }
+//     /// }
+//     ///
+//     /// impl SeedableRng for MyRng {
+//     ///     type Seed = MyRngSeed;
+//     ///
+//     ///     fn from_seed(seed: MyRngSeed) -> MyRng {
+//     ///         MyRng(seed)
+//     ///     }
+//     /// }
+//     /// ```
+//     type Seed: Sized + Default + AsMut<[u8]>;
+//
+//     /// Create a new PRNG using the given seed.
+//     ///
+//     /// PRNG implementations are allowed to assume that bits in the seed are
+//     /// well distributed. That means usually that the number of one and zero
+//     /// bits are roughly equal, and values like 0, 1 and (size - 1) are unlikely.
+//     /// Note that many non-cryptographic PRNGs will show poor quality output
+//     /// if this is not adhered to. If you wish to seed from simple numbers, use
+//     /// `seed_from_u64` instead.
+//     ///
+//     /// All PRNG implementations should be reproducible unless otherwise noted:
+//     /// given a fixed `seed`, the same sequence of output should be produced
+//     /// on all runs, library versions and architectures (e.g. check endianness).
+//     /// Any "value-breaking" changes to the generator should require bumping at
+//     /// least the minor version and documentation of the change.
+//     ///
+//     /// It is not required that this function yield the same state as a
+//     /// reference implementation of the PRNG given equivalent seed; if necessary
+//     /// another constructor replicating behaviour from a reference
+//     /// implementation can be added.
+//     ///
+//     /// PRNG implementations should make sure `from_seed` never panics. In the
+//     /// case that some special values (like an all zero seed) are not viable
+//     /// seeds it is preferable to map these to alternative constant value(s),
+//     /// for example `0xBAD5EEDu32` or `0x0DDB1A5E5BAD5EEDu64` ("odd biases? bad
+//     /// seed"). This is assuming only a small number of values must be rejected.
+//     fn from_seed(seed: Self::Seed) -> Self;
+//
+//     /// Create a new PRNG using a `u64` seed.
+//     ///
+//     /// This is a convenience-wrapper around `from_seed` to allow construction
+//     /// of any `SeedableRng` from a simple `u64` value. It is designed such that
+//     /// low Hamming Weight numbers like 0 and 1 can be used and should still
+//     /// result in good, independent seeds to the PRNG which is returned.
+//     ///
+//     /// This **is not suitable for cryptography**, as should be clear given that
+//     /// the input size is only 64 bits.
+//     ///
+//     /// Implementations for PRNGs *may* provide their own implementations of
+//     /// this function, but the default implementation should be good enough for
+//     /// all purposes. *Changing* the implementation of this function should be
+//     /// considered a value-breaking change.
+//     fn seed_from_u64(mut state: u64) -> Self {
+//         // We use PCG32 to generate a u32 sequence, and copy to the seed
+//         const MUL: u64 = 6364136223846793005;
+//         const INC: u64 = 11634580027462260723;
+//
+//         let mut seed = Self::Seed::default();
+//         for chunk in seed.as_mut().chunks_mut(4) {
+//             // We advance the state first (to get away from the input value,
+//             // in case it has low Hamming Weight).
+//             state = state.wrapping_mul(MUL).wrapping_add(INC);
+//
+//             // Use PCG output function with to_le to generate x:
+//             let xorshifted = (((state >> 18) ^ state) >> 27) as u32;
+//             let rot = (state >> 59) as u32;
+//             let x = xorshifted.rotate_right(rot).to_le();
+//
+//             unsafe {
+//                 let p = &x as *const u32 as *const u8;
+//                 copy_nonoverlapping(p, chunk.as_mut_ptr(), chunk.len());
+//             }
+//         }
+//
+//         Self::from_seed(seed)
+//     }
+//
+//     /// Create a new PRNG seeded from another `Rng`.
+//     ///
+//     /// This may be useful when needing to rapidly seed many PRNGs from a master
+//     /// PRNG, and to allow forking of PRNGs. It may be considered deterministic.
+//     ///
+//     /// The master PRNG should be at least as high quality as the child PRNGs.
+//     /// When seeding non-cryptographic child PRNGs, we recommend using a
+//     /// different algorithm for the master PRNG (ideally a CSPRNG) to avoid
+//     /// correlations between the child PRNGs. If this is not possible (e.g.
+//     /// forking using small non-crypto PRNGs) ensure that your PRNG has a good
+//     /// mixing function on the output or consider use of a hash function with
+//     /// `from_seed`.
+//     ///
+//     /// Note that seeding `XorShiftRng` from another `XorShiftRng` provides an
+//     /// extreme example of what can go wrong: the new PRNG will be a clone
+//     /// of the parent.
+//     ///
+//     /// PRNG implementations are allowed to assume that a good RNG is provided
+//     /// for seeding, and that it is cryptographically secure when appropriate.
+//     /// As of `rand` 0.7 / `rand_core` 0.5, implementations overriding this
+//     /// method should ensure the implementation satisfies reproducibility
+//     /// (in prior versions this was not required).
+//     ///
+//     /// [`rand`]: https://docs.rs/rand
+//     /// [`rand_os`]: https://docs.rs/rand_os
+//     fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
+//         let mut seed = Self::Seed::default();
+//         rng.try_fill_bytes(seed.as_mut())?;
+//         Ok(Self::from_seed(seed))
+//     }
+//
+//     /// Creates a new instance of the RNG seeded via [`getrandom`].
+//     ///
+//     /// This method is the recommended way to construct non-deterministic PRNGs
+//     /// since it is convenient and secure.
+//     ///
+//     /// In case the overhead of using [`getrandom`] to seed *many* PRNGs is an
+//     /// issue, one may prefer to seed from a local PRNG, e.g.
+//     /// `from_rng(thread_rng()).unwrap()`.
+//     ///
+//     /// # Panics
+//     ///
+//     /// If [`getrandom`] is unable to provide secure entropy this method will panic.
+//     ///
+//     /// [`getrandom`]: https://docs.rs/getrandom
+//     #[cfg(feature="getrandom")]
+//     fn from_entropy() -> Self {
+//         let mut seed = Self::Seed::default();
+//         if let Err(err) = getrandom::getrandom(seed.as_mut()) {
+//             panic!("from_entropy failed: {}", err);
+//         }
+//         Self::from_seed(seed)
+//     }
+// }
+//
+// // Implement `RngCore` for references to an `RngCore`.
+// // Force inlining all functions, so that it is up to the `RngCore`
+// // implementation and the optimizer to decide on inlining.
+// impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
+//     #[inline(always)]
+//     fn next_u32(&mut self) -> u32 {
+//         (**self).next_u32()
+//     }
+//
+//     #[inline(always)]
+//     fn next_u64(&mut self) -> u64 {
+//         (**self).next_u64()
+//     }
+//
+//     #[inline(always)]
+//     fn fill_bytes(&mut self, dest: &mut [u8]) {
+//         (**self).fill_bytes(dest)
+//     }
+//
+//     #[inline(always)]
+//     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+//         (**self).try_fill_bytes(dest)
+//     }
+// }
+//
+// // Implement `RngCore` for boxed references to an `RngCore`.
+// // Force inlining all functions, so that it is up to the `RngCore`
+// // implementation and the optimizer to decide on inlining.
+// #[cfg(feature="alloc")]
+// impl<R: RngCore + ?Sized> RngCore for Box<R> {
+//     #[inline(always)]
+//     fn next_u32(&mut self) -> u32 {
+//         (**self).next_u32()
+//     }
+//
+//     #[inline(always)]
+//     fn next_u64(&mut self) -> u64 {
+//         (**self).next_u64()
+//     }
+//
+//     #[inline(always)]
+//     fn fill_bytes(&mut self, dest: &mut [u8]) {
+//         (**self).fill_bytes(dest)
+//     }
+//
+//     #[inline(always)]
+//     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+//         (**self).try_fill_bytes(dest)
+//     }
+// }
+//
+// #[cfg(feature="std")]
+// impl std::io::Read for dyn RngCore {
+//     fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
+//         self.try_fill_bytes(buf)?;
+//         Ok(buf.len())
+//     }
+// }
+//
+// // Implement `CryptoRng` for references to an `CryptoRng`.
+// impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
+//
+// // Implement `CryptoRng` for boxed references to an `CryptoRng`.
+// #[cfg(feature="alloc")]
+// impl<R: CryptoRng + ?Sized> CryptoRng for Box<R> {}
+//
+// #[cfg(test)]
+// mod test {
+//     use super::*;
+//
+//     #[test]
+//     fn test_seed_from_u64() {
+//         struct SeedableNum(u64);
+//         impl SeedableRng for SeedableNum {
+//             type Seed = [u8; 8];
+//             fn from_seed(seed: Self::Seed) -> Self {
+//                 let mut x = [0u64; 1];
+//                 le::read_u64_into(&seed, &mut x);
+//                 SeedableNum(x[0])
+//             }
+//         }
+//
+//         const N: usize = 8;
+//         const SEEDS: [u64; N] = [0u64, 1, 2, 3, 4, 8, 16, -1i64 as u64];
+//         let mut results = [0u64; N];
+//         for (i, seed) in SEEDS.iter().enumerate() {
+//             let SeedableNum(x) = SeedableNum::seed_from_u64(*seed);
+//             results[i] = x;
+//         }
+//
+//         for (i1, r1) in results.iter().enumerate() {
+//             let weight = r1.count_ones();
+//             // This is the binomial distribution B(64, 0.5), so chance of
+//             // weight < 20 is binocdf(19, 64, 0.5) = 7.8e-4, and same for
+//             // weight > 44.
+//             assert!(weight >= 20 && weight <= 44);
+//
+//             for (i2, r2) in results.iter().enumerate() {
+//                 if i1 == i2 { continue; }
+//                 let diff_weight = (r1 ^ r2).count_ones();
+//                 assert!(diff_weight >= 20);
+//             }
+//         }
+//
+//         // value-breakage test:
+//         assert_eq!(results[0], 5029875928683246316);
+//     }
+// }
