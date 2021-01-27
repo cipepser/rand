@@ -48,11 +48,11 @@
 #[cfg(all(feature="alloc", not(feature="std")))] extern crate alloc;
 #[cfg(all(feature="alloc", not(feature="std")))] use alloc::boxed::Box;
 
-// pub use error::Error;
+pub use error::Error;
 // #[cfg(feature="getrandom")] pub use os::OsRng;
 
 
-// mod error;
+mod error;
 // pub mod block;
 // pub mod impls;
 // pub mod le;
@@ -181,7 +181,7 @@ pub trait RngCore {
     /// `self.try_fill_bytes(dest).unwrap()` or more specific error handling.
     ///
     /// [`fill_bytes`]: RngCore::fill_bytes
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()>;
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error>;
 }
 
 /// A marker trait used to indicate that an [`RngCore`] or [`BlockRngCore`]
@@ -403,9 +403,8 @@ impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
     }
 
     #[inline(always)]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()> {
-        (**self).try_fill_bytes(dest).unwrap();
-        Ok(())
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+        (**self).try_fill_bytes(dest)
     }
 }
 
