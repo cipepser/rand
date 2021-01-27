@@ -385,28 +385,28 @@ pub trait CryptoRng {}
 // Implement `RngCore` for references to an `RngCore`.
 // Force inlining all functions, so that it is up to the `RngCore`
 // implementation and the optimizer to decide on inlining.
-impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
-    #[inline(always)]
-    fn next_u32(&mut self) -> u32 {
-        (**self).next_u32()
-    }
-
-    #[inline(always)]
-    fn next_u64(&mut self) -> u64 {
-        (**self).next_u64()
-    }
-
-    #[inline(always)]
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        (**self).fill_bytes(dest)
-    }
-
-    #[inline(always)]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()> {
-        (**self).try_fill_bytes(dest).unwrap();
-        Ok(())
-    }
-}
+// impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
+//     #[inline(always)]
+//     fn next_u32(&mut self) -> u32 {
+//         (**self).next_u32()
+//     }
+//
+//     #[inline(always)]
+//     fn next_u64(&mut self) -> u64 {
+//         (**self).next_u64()
+//     }
+//
+//     #[inline(always)]
+//     fn fill_bytes(&mut self, dest: &mut [u8]) {
+//         (**self).fill_bytes(dest)
+//     }
+//
+//     #[inline(always)]
+//     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()> {
+//         (**self).try_fill_bytes(dest).unwrap();
+//         Ok(())
+//     }
+// }
 
 // Implement `CryptoRng` for references to an `CryptoRng`.
 impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
