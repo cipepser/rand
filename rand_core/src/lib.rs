@@ -134,54 +134,54 @@
 /// [`fill_bytes`]: RngCore::fill_bytes
 /// [`next_u32`]: RngCore::next_u32
 /// [`next_u64`]: RngCore::next_u64
-pub trait RngCore {
-    /// Return the next random `u32`.
-    ///
-    /// RNGs must implement at least one method from this trait directly. In
-    /// the case this method is not implemented directly, it can be implemented
-    /// using `self.next_u64() as u32` or via
-    /// [`fill_bytes`](impls::next_u32_via_fill).
-    fn next_u32(&mut self) -> u32;
-
-    /// Return the next random `u64`.
-    ///
-    /// RNGs must implement at least one method from this trait directly. In
-    /// the case this method is not implemented directly, it can be implemented
-    /// via [`next_u32`](impls::next_u64_via_u32) or via
-    /// [`fill_bytes`](impls::next_u64_via_fill).
-    fn next_u64(&mut self) -> u64;
-
-    /// Fill `dest` with random data.
-    ///
-    /// RNGs must implement at least one method from this trait directly. In
-    /// the case this method is not implemented directly, it can be implemented
-    /// via [`next_u*`](impls::fill_bytes_via_next) or
-    /// via [`try_fill_bytes`](RngCore::try_fill_bytes); if this generator can
-    /// fail the implementation must choose how best to handle errors here
-    /// (e.g. panic with a descriptive message or log a warning and retry a few
-    /// times).
-    ///
-    /// This method should guarantee that `dest` is entirely filled
-    /// with new data, and may panic if this is impossible
-    /// (e.g. reading past the end of a file that is being used as the
-    /// source of randomness).
-    fn fill_bytes(&mut self, dest: &mut [u8]);
-
-    /// Fill `dest` entirely with random data.
-    ///
-    /// This is the only method which allows an RNG to report errors while
-    /// generating random data thus making this the primary method implemented
-    /// by external (true) RNGs (e.g. `OsRng`) which can fail. It may be used
-    /// directly to generate keys and to seed (infallible) PRNGs.
-    ///
-    /// Other than error handling, this method is identical to [`fill_bytes`];
-    /// thus this may be implemented using `Ok(self.fill_bytes(dest))` or
-    /// `fill_bytes` may be implemented with
-    /// `self.try_fill_bytes(dest).unwrap()` or more specific error handling.
-    ///
-    /// [`fill_bytes`]: RngCore::fill_bytes
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()>;
-}
+// pub trait RngCore {
+//     /// Return the next random `u32`.
+//     ///
+//     /// RNGs must implement at least one method from this trait directly. In
+//     /// the case this method is not implemented directly, it can be implemented
+//     /// using `self.next_u64() as u32` or via
+//     /// [`fill_bytes`](impls::next_u32_via_fill).
+//     fn next_u32(&mut self) -> u32;
+//
+//     /// Return the next random `u64`.
+//     ///
+//     /// RNGs must implement at least one method from this trait directly. In
+//     /// the case this method is not implemented directly, it can be implemented
+//     /// via [`next_u32`](impls::next_u64_via_u32) or via
+//     /// [`fill_bytes`](impls::next_u64_via_fill).
+//     fn next_u64(&mut self) -> u64;
+//
+//     /// Fill `dest` with random data.
+//     ///
+//     /// RNGs must implement at least one method from this trait directly. In
+//     /// the case this method is not implemented directly, it can be implemented
+//     /// via [`next_u*`](impls::fill_bytes_via_next) or
+//     /// via [`try_fill_bytes`](RngCore::try_fill_bytes); if this generator can
+//     /// fail the implementation must choose how best to handle errors here
+//     /// (e.g. panic with a descriptive message or log a warning and retry a few
+//     /// times).
+//     ///
+//     /// This method should guarantee that `dest` is entirely filled
+//     /// with new data, and may panic if this is impossible
+//     /// (e.g. reading past the end of a file that is being used as the
+//     /// source of randomness).
+//     fn fill_bytes(&mut self, dest: &mut [u8]);
+//
+//     /// Fill `dest` entirely with random data.
+//     ///
+//     /// This is the only method which allows an RNG to report errors while
+//     /// generating random data thus making this the primary method implemented
+//     /// by external (true) RNGs (e.g. `OsRng`) which can fail. It may be used
+//     /// directly to generate keys and to seed (infallible) PRNGs.
+//     ///
+//     /// Other than error handling, this method is identical to [`fill_bytes`];
+//     /// thus this may be implemented using `Ok(self.fill_bytes(dest))` or
+//     /// `fill_bytes` may be implemented with
+//     /// `self.try_fill_bytes(dest).unwrap()` or more specific error handling.
+//     ///
+//     /// [`fill_bytes`]: RngCore::fill_bytes
+//     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ()>;
+// }
 
 /// A marker trait used to indicate that an [`RngCore`] or [`BlockRngCore`]
 /// implementation is supposed to be cryptographically secure.
