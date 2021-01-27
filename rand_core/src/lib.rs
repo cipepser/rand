@@ -445,7 +445,7 @@ impl<'a, R: RngCore + ?Sized> RngCore for &'a mut R {
 impl<'a, R: CryptoRng + ?Sized> CryptoRng for &'a mut R {}
 
 // Implement `CryptoRng` for boxed references to an `CryptoRng`.
-#[cfg(feature="alloc")]
+// #[cfg(feature="alloc")]
 // impl<R: CryptoRng + ?Sized> CryptoRng for Box<R> {}
 
 // #[cfg(test)]
