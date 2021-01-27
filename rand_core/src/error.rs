@@ -11,7 +11,6 @@
 use core::fmt;
 use core::num::NonZeroU32;
 
-
 /// Error type of random number generators
 ///
 /// In order to be compatible with `std` and `no_std`, this type has two
@@ -20,7 +19,7 @@ use core::num::NonZeroU32;
 pub struct Error {
     // #[cfg(feature="std")]
     // inner: Box<dyn std::error::Error + Send + Sync + 'static>,
-    #[cfg(not(feature="std"))]
+    #[cfg(not(feature = "std"))]
     code: NonZeroU32,
 }
 
@@ -37,6 +36,11 @@ impl Error {
     // {
     //     Error { inner: err.into() }
     // }
+
+    #[cfg(not(feature = "std"))]
+    pub fn new(code: u32) -> Self {
+        Error { code: NonZeroU32::new(code).expect("code must be positive value") }
+    }
 
     /// Reference the inner error (`std` only)
     ///
@@ -80,8 +84,7 @@ impl Error {
         //     }
         // }
         match self.code() {
-            Some(code) if u32::from(code) < Self::INTERNAL_START =>
-                Some(u32::from(code) as i32),
+            Some(code) if u32::from(code) < Self::INTERNAL_START => Some(u32::from(code) as i32),
             _ => None,
         }
     }
@@ -96,7 +99,8 @@ impl Error {
         // #[cfg(feature="std")] {
         //     self.inner.downcast_ref::<ErrorCode>().map(|c| c.0)
         // }
-        #[cfg(not(feature="std"))] {
+        #[cfg(not(feature = "std"))]
+        {
             Some(self.code)
         }
     }
@@ -107,10 +111,12 @@ impl fmt::Debug for Error {
         // #[cfg(feature="std")] {
         //     write!(f, "Error {{ inner: {:?} }}", self.inner)
         // }
-        #[cfg(all(feature="getrandom", not(feature="std")))] {
+        #[cfg(all(feature = "getrandom", not(feature = "std")))]
+        {
             getrandom::Error::from(self.code).fmt(f)
         }
-        #[cfg(not(feature="getrandom"))] {
+        #[cfg(not(feature = "getrandom"))]
+        {
             write!(f, "Error {{ code: {} }}", self.code)
         }
     }
@@ -121,10 +127,12 @@ impl fmt::Display for Error {
         // #[cfg(feature="std")] {
         //     write!(f, "{}", self.inner)
         // }
-        #[cfg(all(feature="getrandom", not(feature="std")))] {
+        #[cfg(all(feature = "getrandom", not(feature = "std")))]
+        {
             getrandom::Error::from(self.code).fmt(f)
         }
-        #[cfg(not(feature="getrandom"))] {
+        #[cfg(not(feature = "getrandom"))]
+        {
             write!(f, "error code {}", self.code)
         }
     }
@@ -136,7 +144,8 @@ impl From<NonZeroU32> for Error {
         // #[cfg(feature="std")] {
         //     Error { inner: Box::new(ErrorCode(code)) }
         // }
-        #[cfg(not(feature="std"))] {
+        #[cfg(not(feature = "std"))]
+        {
             Error { code }
         }
     }
